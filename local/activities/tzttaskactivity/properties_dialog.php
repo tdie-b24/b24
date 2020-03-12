@@ -20,14 +20,13 @@ function selected($condition) {
     }
 }
 
-
+/*
 echo "<pre>";
 print_r($arCurrentValues);
-echo "</pre>";
+echo "</pre>";*/
 
 ?>
 
-<!-- Поле произвольного номера телефона (отображается, когда выбран соотв. тип контакта). -->
 <?/*<tr class="switchable on-phone">
     <td align="right" width="40%"><span class="adm-required-field"><?= Loc::getMessage('BPTA1A_TASKID') ?>:</span></td>
     <td width="60%">
@@ -35,8 +34,6 @@ echo "</pre>";
     </td>
 </tr>*/?>
 
-
-<!-- Тип контакта: произвольный номер телефона, контакт CRM. -->
 <?/*<tr>
     <td align="right" width="40%"><span class="adm-required-field"><?= Loc::getMessage('BPTA1A_TASKID') ?>:</span></td>
     <td width="60%">

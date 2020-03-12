@@ -85,9 +85,12 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
 
         if (!CModule::IncludeModule("tasks"))
             return CBPActivityExecutionStatus::Closed;
-
-
+        
         $arResultTaskInfo = $this->__GetTaskParams(array("ID"=>$this->TaskId),array($this->TaskProps));
+
+        if(empty($arResultTaskInfo)){
+            return CBPActivityExecutionStatus::Closed;
+        }
 
        /*$arTaskCreatedBy = $this->__GetUsers($this->TaskCreatedBy);
         $arTaskAssignedTo = $this->__GetUsers($this->TaskAssignedTo);
