@@ -2,6 +2,8 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 
+use Bitrix\Bizproc\FieldType;
+
 Loc::loadMessages(__FILE__);
 CModule::IncludeModule("tasks");
 /**
@@ -13,7 +15,7 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
     /** Тип поля анкеты "заметка". Полем не является, используется добавления пояснений в анкету. */
     const FIELD_TYPE_NOTE = 'CBPIvSipCallActivity::FIELD_TYPE_NOTE';
 
-    private $taskId = 0;
+    private $task_id = 0;
     private $taskStatus = false;
 
     private $isInEventActivityMode = false;
@@ -27,27 +29,38 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
         parent::__construct($name);
 
         $this->arProperties = array(
-            'SetStatus' => 'Y',
+            //'SetStatus' => 'Y',
 
             "Title" => "", //название действия
-            "TaskId" => "", //ID задачи
-            "TaskName" => "", //название задачи
-            "TaskProps" => "", //свойство задачи
+            "Task_id" => "", //ID задачи
+            "Task_title" => "", //название задачи
+            "Task_props" => array(), //свойство задачи
+            "Result" => array(),
+            'TaskResults' => array(),
 
             // Output:
-            'Comment' => '',
-            //'QuestionnaireResults' => array(),
+            //'Comment' => '',
             'ValueStorage' => array(),
         );
 
         $this->SetPropertiesTypes(array(
-            'TaskId' => array('Type' => FieldType::INT),
-            'TaskName' => array('Type' => FieldType::STRING),
-            'TaskProps' => array('Type' => FieldType::SELECT),
-            'SetStatus' => array('Type' => FieldType::BOOL),
-            'Result' => array('Type' => FieldType::SELECT),
-            'Comment' => array('Type' => FieldType::TEXT),
+            'Task_id' => array('Type' => FieldType::INT),
+            'Task_title' => array('Type' => FieldType::STRING),
+            'Task_props' => array('Type' => FieldType::SELECT),
+            //'Result' => array('Type' => FieldType::SELECT),
+            //'SetStatus' => array('Type' => FieldType::BOOL),
+            //'Comment' => array('Type' => FieldType::TEXT),
         ));
+    }
+
+    protected function ReInitialize()
+    {
+        parent::ReInitialize();
+
+        $this->Task_id = 0;
+        $this->Task_title = '';
+        $this->Task_props = array();
+        $this->TaskResults = array();
     }
 
     private function __GetTaskParams($filterTask,$PropsFields = array())
@@ -63,7 +76,6 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
 
         $arFilter = array_merge($arFilter,$filterTask);
         $arSelect = array_merge($arSelect,$PropsFields);
-
 
         $resTaskObj = CTasks::GetList(
             Array("TITLE" => "ASC"),
@@ -85,67 +97,23 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
 
         if (!CModule::IncludeModule("tasks"))
             return CBPActivityExecutionStatus::Closed;
-        
-        $arResultTaskInfo = $this->__GetTaskParams(array("ID"=>$this->TaskId),array($this->TaskProps));
 
-        if(empty($arResultTaskInfo)){
+
+        __log("Execute");
+
+        $arResultTaskInfo = array();
+        ///$arResultTaskInfo = $this->__GetTaskParams(array("ID"=>$this->task_id));
+
+        //__log($arResultTaskInfo);
+
+        /*if(empty($arResultTaskInfo)){
             return CBPActivityExecutionStatus::Closed;
-        }
+        }else{
+            $this->TaskResults =  $arResultTaskInfo;
+        }*/
 
-       /*$arTaskCreatedBy = $this->__GetUsers($this->TaskCreatedBy);
-        $arTaskAssignedTo = $this->__GetUsers($this->TaskAssignedTo);
-
-        if (count($arTaskCreatedBy) <= 0 || count($arTaskAssignedTo) <= 0)
-            return CBPActivityExecutionStatus::Closed;
-
-        $arTaskTrackers = $this->__GetUsers($this->TaskTrackers);
-
-        $bFirst = true;
-        $ACCOMPLICES = array();
-        foreach($arTaskAssignedTo as $respUser)
-        {
-            if ($bFirst)
-            {
-                $RESPONSIBLE_ID = $respUser;
-                $bFirst = false;
-            }
-            else
-                $ACCOMPLICES[] = $respUser;
-        }
-
-        $arFields = array(
-            "MODIFIED_BY" => $arTaskCreatedBy[0],
-            "CREATED_BY" => $arTaskCreatedBy[0],
-            "SITE_ID" => SITE_ID,
-            "STATUS" => "1",
-            "DATE_CREATE" => date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME)),
-            "START_DATE_PLAN" => $this->TaskActiveFrom,
-            "END_DATE_PLAN" => $this->TaskActiveTo,
-            "DEADLINE" => $this->TaskActiveTo,
-            "TITLE" => $this->TaskName,
-            "DESCRIPTION" => $this->TaskDetailText,
-            "PRIORITY" => $this->TaskPriority,
-            "RESPONSIBLE_ID" => $RESPONSIBLE_ID,
-            "AUDITORS" => $arTaskTrackers,
-            "ADD_IN_REPORT" => $this->TaskReport,
-            "TASK_CONTROL" => $this->TaskCheckResult,
-            "ALLOW_CHANGE_DEADLINE" => $this->TaskChangeDeadline,
-        );
-        if ($this->TaskGroupId && $this->TaskGroupId !== 0)
-            $arFields["GROUP_ID"] = $this->TaskGroupId;
-
-        if (count ($ACCOMPLICES) > 0)
-            $arFields["ACCOMPLICES"] = $ACCOMPLICES;
-
-        $task = new CTasks;
-        $result = $task->Add($arFields);
-
-        if ($result)
-            $this->WriteToTrackingService(str_replace("#VAL#", $result, GetMessage("BPSA_TRACK_OK")));
-
-        $arErrors = $task->GetErrors();
-        if (count($arErrors) > 0)
-            $this->WriteToTrackingService(GetMessage("BPSA_TRACK_ERROR"));*/
+        // Вернем указание исполняющей среде, что действие еще выполняется
+        // return CBPActivityExecutionStatus::Executing;
 
         return CBPActivityExecutionStatus::Closed;
     }
@@ -167,11 +135,12 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
         if (!is_array($arCurrentValues))
         {
             $arCurrentValues = array(
-                'TaskId' => '',
-                'TaskName' => '',
-                'TaskProps' => '',
-                'SetStatus' => 'Y',
-                //'QuestionnaireResults' => array()
+                'Task_id' => '',
+                'Task_title' => '',
+                'Task_props' => array(),
+                'TaskResults' => array()
+                //'SetStatus' => 'Y',
+
             );
 
             $arCurrentActivity= &CBPWorkflowTemplateLoader::FindActivityByName(
@@ -196,7 +165,8 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
                 //"RESPONSIBLE_ID" => "2"
             ),
             array(
-                "ID","TITLE",
+                "ID",
+                "TITLE",
                 "PARENT_ID",
                 "GROUP_ID",
                 "PRIORITY",
@@ -257,7 +227,7 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
         $runtime = CBPRuntime::GetRuntime();
 
         // проверяем на пустоту
-        if (empty($arCurrentValues['TaskId'])) {
+        if (empty($arCurrentValues['Task_id'])) {
             $arErrors[] = array(
                 'code' => 'Empty',
                 'message' => Loc::getMessage('ERROR_NO_TASKID')
@@ -265,7 +235,7 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
         }
 
         // проверяем на пустоту
-        if (empty($arCurrentValues['TaskProps'])) {
+        if (empty($arCurrentValues['Task_props'])) {
             $arErrors[] = array(
                 'code' => 'Empty',
                 'message' => Loc::getMessage('BPTA1A_TASKPROPS')
@@ -277,11 +247,14 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
         }
 
         $arProperties = array(
-            'TaskId' => $arCurrentValues['TaskId'],
-            'TaskName' => $arCurrentValues['TaskName'],
-            'TaskProps' => $arCurrentValues['TaskProps'],
-            'SetStatus' => $arCurrentValues['SetStatus'],
+            'Task_id' => $arCurrentValues['Task_id'],
+            'Task_title' => $arCurrentValues['Task_title'],
+            'Task_props' => $arCurrentValues['Task_props'],
+            'TaskResults' => array(),
         );
+
+        // вариант когда возвращаем выбранные поля
+        $arProperties["TaskResults"] = self::buildTResults($arCurrentValues['Task_props']);
 
         $arCurrentActivity = &CBPWorkflowTemplateLoader::FindActivityByName(
             $arWorkflowTemplate,
@@ -289,8 +262,31 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
         );
         $arCurrentActivity['Properties'] = $arProperties;
 
+        __log($arCurrentActivity);
+
         return true;
     }
+
+
+    private static function buildTResults($fields)
+    {
+        $result = array();
+        if(!empty($fields)){
+            foreach ($fields as $itemProp){
+
+                $result["Task_".strtolower($itemProp)] = array(
+                    "Name"=>$itemProp,
+                    "Type"=>($itemProp == "ID" ? FieldType::INT : FieldType::STRING),
+                );
+
+            }
+        }
+
+        __log($result);
+
+        return $result;
+    }
+
 
     /**
      * Создает задание на звонок и подписывается на событие завершения задания (нажатие кнопки "Готово").

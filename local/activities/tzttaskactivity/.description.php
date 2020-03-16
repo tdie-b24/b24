@@ -16,5 +16,25 @@ $arActivityDescription = array(
         //'ID' => 'interaction', // Уведомления
         'ID' => 'other', // прочее
     ),
-    'ADDITIONAL_RESULT' => array('QuestionnaireResults')
+    // в случае если возвращаемые параметры будут изместны только после выбора
+    'ADDITIONAL_RESULT' => array('TaskResults'),
+    // в случае если возвращаемые параметры известны
+    /*"RETURN" => array(
+        'Task_id' => [
+            'NAME' => 'ID',
+            'TYPE' => 'string'
+        ],
+        "Task_title" => array(
+            "NAME" => "Наименование задачи",
+            "TYPE" => "string",
+        ),
+        "Task_props" => array(
+            "NAME" => "Свойство задачи",
+            "TYPE" => "string",
+        ),
+        "TaskResults" => array(
+            "NAME" => "Результат",
+            "TYPE" => "string",
+        ),
+    ),*/
 );
