@@ -77,6 +77,8 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
         $arFilter = array_merge($arFilter,$filterTask);
         $arSelect = array_merge($arSelect,$PropsFields);
 
+        __log(array($arFilter, $arSelect));
+
         $resTaskObj = CTasks::GetList(
             Array("TITLE" => "ASC"),
             $arFilter,
@@ -98,19 +100,23 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
         if (!CModule::IncludeModule("tasks"))
             return CBPActivityExecutionStatus::Closed;
 
-
-        __log("Execute");
-
         $arResultTaskInfo = array();
-        ///$arResultTaskInfo = $this->__GetTaskParams(array("ID"=>$this->task_id));
+        $arResultTaskInfo = $this->__GetTaskParams(array("ID"=>$this->Task_id),$this->Task_props);
 
-        //__log($arResultTaskInfo);
 
-        /*if(empty($arResultTaskInfo)){
+        if(empty($arResultTaskInfo)){
             return CBPActivityExecutionStatus::Closed;
         }else{
-            $this->TaskResults =  $arResultTaskInfo;
-        }*/
+            $resT = array();
+            if(count($arResultTaskInfo) == 1){
+                foreach ($arResultTaskInfo[0] as $k=>$item){
+                    $resT["Task_".strtolower($k)] = $item;
+                }
+            }
+
+            $this->SetProperties($resT);
+
+        }
 
         // Вернем указание исполняющей среде, что действие еще выполняется
         // return CBPActivityExecutionStatus::Executing;
@@ -118,6 +124,15 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
         return CBPActivityExecutionStatus::Closed;
     }
 
+
+    public function SetProperties($arProperties = array())
+    {
+        if (count($arProperties) > 0)
+        {
+            foreach ($arProperties as $key => $value)
+                $this->arProperties[$key] = $value;
+        }
+    }
 
     /**
      * Готовит текущие настройки действия к отображению в форме настройки действия и генерирует HTML формы настройки.
@@ -262,8 +277,6 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
         );
         $arCurrentActivity['Properties'] = $arProperties;
 
-        __log($arCurrentActivity);
-
         return true;
     }
 
@@ -281,8 +294,6 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
 
             }
         }
-
-        __log($result);
 
         return $result;
     }
