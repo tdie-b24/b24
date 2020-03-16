@@ -77,7 +77,7 @@ class CBPTzTTaskActivity  extends CBPActivity implements IBPEventActivity, IBPAc
         $arFilter = array_merge($arFilter,$filterTask);
         $arSelect = array_merge($arSelect,$PropsFields);
 
-        __log(array($arFilter, $arSelect));
+        //__log(array($arFilter, $arSelect));
 
         $resTaskObj = CTasks::GetList(
             Array("TITLE" => "ASC"),
